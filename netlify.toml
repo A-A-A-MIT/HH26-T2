@@ -1,0 +1,22 @@
+[build]
+  command = "npm run build"
+  publish = "dist"
+  base = "frontend"
+
+[[redirects]]
+  from = "/ask"
+  to = "https://hh26-t2-608791195197.us-east1.run.app/ask"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/health"
+  to = "https://hh26-t2-608791195197.us-east1.run.app/health"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/api/transcribe"
+  to = "/.netlify/functions/transcribe"
+  status = 200
+  force = true
