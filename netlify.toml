@@ -3,6 +3,9 @@
   publish = "dist"
   base = "frontend"
 
+[functions]
+  region = "us-east-1"
+
 [[redirects]]
   from = "/ask"
   to = "https://hh26-t2-608791195197.us-east1.run.app/ask"
