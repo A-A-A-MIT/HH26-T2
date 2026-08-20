@@ -1,0 +1,21 @@
+{
+  "buildCommand": "cd frontend && npm install && npm run build",
+  "outputDirectory": "frontend/dist",
+  "installCommand": "cd frontend && npm install",
+  "framework": "vite",
+  "regions": ["iad1"],
+  "rewrites": [
+    {
+      "source": "/ask",
+      "destination": "https://hh26-t2-608791195197.us-east1.run.app/ask"
+    },
+    {
+      "source": "/health",
+      "destination": "https://hh26-t2-608791195197.us-east1.run.app/health"
+    },
+    {
+      "source": "/api/transcribe",
+      "destination": "/api/transcribe"
+    }
+  ]
+}
