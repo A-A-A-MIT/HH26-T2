@@ -1,7 +1,5 @@
-/**
- * Netlify Serverless Function: Sarvam STT Proxy
- * Matches exports.handler pattern for Netlify runtime.
- */
+const parser = require('lambda-multipart-parser');
+const FormData = require('form-data');
 
 exports.handler = async function (event, context) {
   if (event.httpMethod !== 'POST') {
@@ -23,12 +21,25 @@ exports.handler = async function (event, context) {
   }
 
   try {
-    // Netlify functions receive body as string/base64
-    const body = event.isBase64Encoded
-      ? Buffer.from(event.body, 'base64')
-      : Buffer.from(event.body);
+    // Parse the multipart form-data request
+    const parsed = await parser.parse(event);
+    const file = parsed.files && parsed.files[0];
 
-    const contentType = event.headers['content-type'] || '';
+    if (!file) {
+      return {
+        statusCode: 400,
+        body: JSON.stringify({ error: 'No audio file received.' }),
+      };
+    }
+
+    // Reconstruct the form-data request exactly as required by the Sarvam API
+    const formData = new FormData();
+    formData.append('file', file.content, {
+      filename: file.filename || 'recording.wav',
+      contentType: file.contentType || 'audio/wav',
+    });
+    formData.append('model', 'saaras:v3');
+    formData.append('mode', 'transcribe');
 
     const startTime = Date.now();
 
@@ -36,9 +47,9 @@ exports.handler = async function (event, context) {
       method: 'POST',
       headers: {
         'api-subscription-key': apiKey,
-        'Content-Type': contentType,
+        ...formData.getHeaders(),
       },
-      body: body,
+      body: formData,
     });
 
     const sttLatencyMs = Date.now() - startTime;
