@@ -1,16 +1,14 @@
-const parser = require('lambda-multipart-parser');
-const FormData = require('form-data');
+import parser from 'lambda-multipart-parser';
+import FormData from 'form-data';
 
-exports.handler = async function (event, context) {
+export const handler = async function (event, context) {
   if (event.httpMethod !== 'POST') {
     return {
       statusCode: 405,
       body: JSON.stringify({ error: 'Method not allowed' }),
     };
   }
-
   const apiKey = process.env.SARVAM_API_KEY || '';
-
   if (!apiKey || apiKey === 'your_sarvam_api_key_here') {
     return {
       statusCode: 400,
@@ -19,19 +17,16 @@ exports.handler = async function (event, context) {
       }),
     };
   }
-
   try {
     // Parse the multipart form-data request
     const parsed = await parser.parse(event);
     const file = parsed.files && parsed.files[0];
-
     if (!file) {
       return {
         statusCode: 400,
         body: JSON.stringify({ error: 'No audio file received.' }),
       };
     }
-
     // Reconstruct the form-data request exactly as required by the Sarvam API
     const formData = new FormData();
     formData.append('file', file.content, {
@@ -40,9 +35,7 @@ exports.handler = async function (event, context) {
     });
     formData.append('model', 'saaras:v3');
     formData.append('mode', 'transcribe');
-
     const startTime = Date.now();
-
     const sarvamResponse = await fetch('https://api.sarvam.ai/speech-to-text', {
       method: 'POST',
       headers: {
@@ -51,9 +44,7 @@ exports.handler = async function (event, context) {
       },
       body: formData,
     });
-
     const sttLatencyMs = Date.now() - startTime;
-
     if (!sarvamResponse.ok) {
       const errorBody = await sarvamResponse.text();
       console.error(`[Sarvam STT Error ${sarvamResponse.status}]:`, errorBody);
@@ -64,9 +55,7 @@ exports.handler = async function (event, context) {
         }),
       };
     }
-
     const data = await sarvamResponse.json();
-
     return {
       statusCode: 200,
       headers: {
