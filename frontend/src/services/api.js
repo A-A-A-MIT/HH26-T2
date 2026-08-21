@@ -190,7 +190,18 @@ export async function processQuery(textQuery, sttLatencyMs = 0, onProgress = () 
 
   onProgress('generating');
 
-  const data = await response.json();
+  const rawText = await response.text();
+
+  let data;
+  try {
+    data = JSON.parse(rawText);
+  } catch (parseErr) {
+    throw new Error(
+      `Backend returned invalid JSON (HTTP ${response.status}). ` +
+      `Body: "${rawText.slice(0, 200) || '(empty)'}"`
+    );
+  }
+
   const fetchEnd = performance.now();
   const frontendRoundTripMs = Math.round(fetchEnd - fetchStart);
 
