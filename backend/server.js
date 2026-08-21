@@ -39,16 +39,13 @@ app.post('/api/transcribe', upload.single('file'), async (req, res) => {
 
     const formData = new FormData();
 
-    const audioBlob = new Blob([req.file.buffer], {
-      type: req.file.mimetype || 'audio/webm',
-    });
-
-    formData.append(
-      'file',
-      audioBlob,
-      req.file.originalname || 'recording.webm'
+    const audioFile = new File(
+      [req.file.buffer],
+      req.file.originalname || 'recording.webm',
+      { type: req.file.mimetype || 'audio/webm' }
     );
 
+    formData.append('file', audioFile);
     formData.append('model', 'saaras:v3');
     formData.append('mode', 'transcribe');
     // Requirement #8: Use Sarvam API authentication header api-subscription-key

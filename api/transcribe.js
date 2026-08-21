@@ -32,8 +32,26 @@ export default async function handler(req, res) {
     }
     const body = Buffer.concat(chunks);
 
-    // Extract content-type header to preserve multipart boundary
+    // Parse the incoming multipart form data using the Web API Request object
     const contentType = req.headers['content-type'] || '';
+    const incomingRequest = new Request('http://localhost', {
+      method: 'POST',
+      headers: { 'Content-Type': contentType },
+      body: body,
+    });
+    const incomingForm = await incomingRequest.formData();
+
+    // Extract the uploaded audio file
+    const audioFile = incomingForm.get('file');
+    if (!audioFile) {
+      return res.status(400).json({ error: 'No audio file received.' });
+    }
+
+    // Rebuild FormData with all fields required by the Sarvam API
+    const sarvamForm = new FormData();
+    sarvamForm.append('file', audioFile, audioFile.name || 'recording.wav');
+    sarvamForm.append('model', incomingForm.get('model') || 'saaras:v3');
+    sarvamForm.append('mode', incomingForm.get('mode') || 'transcribe');
 
     const startTime = Date.now();
 
@@ -41,9 +59,8 @@ export default async function handler(req, res) {
       method: 'POST',
       headers: {
         'api-subscription-key': apiKey,
-        'Content-Type': contentType,
       },
-      body: body,
+      body: sarvamForm,
     });
 
     const sttLatencyMs = Date.now() - startTime;

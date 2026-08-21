@@ -24,11 +24,34 @@ exports.handler = async function (event, context) {
 
   try {
     // Netlify functions receive body as string/base64
-    const body = event.isBase64Encoded
+    const rawBody = event.isBase64Encoded
       ? Buffer.from(event.body, 'base64')
       : Buffer.from(event.body);
 
     const contentType = event.headers['content-type'] || '';
+
+    // Parse the incoming multipart form data using the Web API Request object
+    const incomingRequest = new Request('http://localhost', {
+      method: 'POST',
+      headers: { 'Content-Type': contentType },
+      body: rawBody,
+    });
+    const incomingForm = await incomingRequest.formData();
+
+    // Extract the uploaded audio file
+    const audioFile = incomingForm.get('file');
+    if (!audioFile) {
+      return {
+        statusCode: 400,
+        body: JSON.stringify({ error: 'No audio file received.' }),
+      };
+    }
+
+    // Rebuild FormData with all fields required by the Sarvam API
+    const sarvamForm = new FormData();
+    sarvamForm.append('file', audioFile, audioFile.name || 'recording.wav');
+    sarvamForm.append('model', incomingForm.get('model') || 'saaras:v3');
+    sarvamForm.append('mode', incomingForm.get('mode') || 'transcribe');
 
     const startTime = Date.now();
 
@@ -36,9 +59,8 @@ exports.handler = async function (event, context) {
       method: 'POST',
       headers: {
         'api-subscription-key': apiKey,
-        'Content-Type': contentType,
       },
-      body: body,
+      body: sarvamForm,
     });
 
     const sttLatencyMs = Date.now() - startTime;
